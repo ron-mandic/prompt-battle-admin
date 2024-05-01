@@ -1,5 +1,26 @@
 <script lang="ts">
 	import { TEXT_H1 } from '$lib/ts/constants';
+	import { onMount } from 'svelte';
+	import { Socket, io } from 'socket.io-client';
+
+	let socket: Socket = io('http://localhost:5173');
+	let player0 = '';
+	let player1 = '';
+
+	onMount(() => {
+		socket.on('connect', () => {
+			socket.emit('server:admin:__connect__', socket.id);
+		});
+
+		socket.on('server:admin:showInputs', ({ i, value }) => {
+			if (i === 0) player0 = value;
+			if (i === 1) player1 = value;
+		});
+
+		return () => {
+			socket.disconnect();
+		};
+	});
 </script>
 
 <div class="w-full h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
@@ -7,11 +28,11 @@
 		<h1 class="uppercase text-center w-full">{@html TEXT_H1}</h1>
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0" class="player py-[25px]">
-				<span class="relative">wdwd</span>
+				<span class="relative">{player0}</span>
 			</div>
 			<div class="vs">vs</div>
 			<div id="player-1" class="player py-[25px]">
-				<span class="relative"></span>
+				<span class="relative">{player1}</span>
 			</div>
 		</div>
 	</div>
