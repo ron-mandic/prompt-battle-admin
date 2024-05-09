@@ -1,52 +1,43 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
-	import Counter from '$lib/components/Counter.svelte';
 	import Autoscroll from '$lib/components/Autoscroll.svelte';
-	import AutoscrollChallenge from '$lib/components/AutoscrollChallenge.svelte';
-	import { fade } from 'svelte/transition';
+	import Loader from '$lib/components/Loader.svelte';
 
 	// TODO: Server connection
 
-	let hasStarted = false;
-	let challenge = 'Design a new product for the smallest target group (including you)!';
+	let challenge =
+		'Design a new product for the smallest target group (including you)! Here it is, another explanation';
 	let player0 = 'Marcel';
 	let player1 = 'Alexander';
-	let player0Prompt = '...';
-	let player1Prompt = '...';
 
-	onMount(() => {
-		setTimeout(() => {
-			hasStarted = true;
-		}, 5000);
-	});
+	let imgPlayer0 = '';
+	let imgPlayer1 = '';
 </script>
-
-{#if !hasStarted}
-	<div id="challenge-overlay" class="fixed h-screen w-screen flex flex-col items-center gap-[14px]">
-		<h1>Challenge:</h1>
-		<AutoscrollChallenge innerText={challenge} />
-	</div>
-{/if}
 
 <div
 	id="prompt-screen"
-	class="w-full h-full m-auto pt-[84px] pb-[103px] flex-col justify-between flex"
+	class="w-full h-full m-auto pt-[117px] pb-[103px] flex-col justify-between flex"
 >
 	<div class="grid w-full h-full">
-		<div class="header relative line-clamp-2" class:opacity-0={!hasStarted}>
-			<p>{challenge}</p>
-			<div class="label absolute left-0 bottom-0">Challenge</div>
-		</div>
 		<div class="main relative">
-			<div class="col-left">
-				<Autoscroll
-					--padding-bottom="56px"
-					innerText={'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.'}
-				/>
+			<div class="col-left pointer-events-none relative">
+				{#if !imgPlayer0}
+					<div class="loader absolute">
+						<Loader />
+					</div>
+				{:else}
+					<img src="https://placehold.co/792" width="792" height="792" alt="792" />
+				{/if}
 			</div>
 			<div class="col-mid flex flex-col justify-between items-center">
-				<div id="prompt-clock" class="flex flex-col justify-center">
+				<div id="prompt-prompt" class="flex flex-col items-start overflow-hidden">
+					<div class="prompter overflow-hidden">
+						<Autoscroll route="results" innerText={challenge} disableScrollbar />
+					</div>
+					<div class="label w-full h-[16px]">Challenge</div>
+				</div>
+				<div id="prompt-clock" class="flex flex-col justify-center mt-[6px]">
 					<p>time remaining:</p>
 					<p>01:00</p>
 				</div>
@@ -59,8 +50,14 @@
 					</p>
 				</div>
 			</div>
-			<div class="col-right">
-				<Autoscroll --padding-bottom="56px" innerText={player1Prompt} />
+			<div class="col-right pointer-events-none relative">
+				{#if !imgPlayer1}
+					<div class="loader absolute">
+						<Loader --delay={0.5} />
+					</div>
+				{:else}
+					<img src="https://placehold.co/792" width="792" height="792" alt="792" />
+				{/if}
 			</div>
 			<div class="footer">
 				<div class="absolute left-0 bottom-0">{player0}</div>
@@ -70,52 +67,13 @@
 	</div>
 </div>
 
-{#if hasStarted}
-	<Counter
-		onEnd={() => {
-			console.log('Started!');
-			document.querySelectorAll('.marquee').forEach((marquee) => {
-				marquee.classList.add('fade');
-			});
-		}}
-	/>
-{/if}
-
 <style lang="scss">
-	#challenge-overlay {
-		position: fixed;
-		padding-top: 117px;
-		flex-shrink: 0;
-		background: rgba(0, 0, 0, 0.875);
-		z-index: 190;
-
-		h1 {
-			padding: 21px 27px;
-			width: 774px;
-			height: 200px;
-			width: fit-content;
-			border: 2px solid #6eebea;
-			background: #1c1f22;
-			color: #fff;
-			text-align: center;
-			font-size: 120px;
-			font-style: normal;
-			font-weight: 700;
-			line-height: normal;
-		}
-	}
-
 	#prompt-screen .grid {
-		grid-template-rows: 200px 646px;
-		row-gap: 47px;
+		grid-template-rows: 860px;
 	}
 
-	:global(.label) {
-		width: 260px;
-		height: 51px;
-		flex-shrink: 0;
+	.label {
 		border-top: 2px solid #6eebea;
-		border-right: 2px solid #6eebea;
 		color: #fff;
 		text-align: center;
 		font-size: 36px;
@@ -126,32 +84,10 @@
 		z-index: 2;
 	}
 
-	.header,
-	.main {
-		width: 1888px;
-		margin: 0 auto;
-	}
-
-	.header {
-		height: 200px;
-		flex-shrink: 0;
-		border: 2px solid #6eebea;
-		background: #1c1f22;
-		padding: 20px;
-		z-index: 999;
-
-		p {
-			color: #fff;
-			text-align: center;
-			font-size: 60px;
-			font-style: normal;
-			font-weight: 700;
-			line-height: normal;
-		}
-	}
-
 	.main {
 		display: grid;
+		width: 1888px;
+		margin: 0 auto;
 		grid-template-columns: 808px 240px 808px;
 		grid-template-rows: 1fr;
 		column-gap: 1rem;
@@ -160,11 +96,29 @@
 		.col-right {
 			border: 2px solid #6eebea;
 			background: #1c1f22;
-			max-height: 646px;
+			padding: 0.5rem;
+
+			.loader {
+				scale: 1;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%);
+			}
 		}
 
 		.col-mid {
-			#prompt-clock {
+			#prompt-prompt {
+				border: 2px solid #6eebea;
+				background: #1c1f22;
+				width: 240px;
+				height: 260px;
+
+				.prompter {
+					max-height: 202px;
+				}
+			}
+			#prompt-clock,
+			#prompt-command {
 				width: 245px;
 				height: 124px;
 				flex-shrink: 0;
@@ -172,7 +126,11 @@
 				padding: 8px 12px 0;
 				border: 2px solid #6eebea;
 				background: #1c1f22;
-
+			}
+			#prompt-command {
+				align-items: center;
+			}
+			#prompt-clock {
 				p:nth-child(1) {
 					color: #fff;
 					text-align: center;

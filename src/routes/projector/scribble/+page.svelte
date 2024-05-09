@@ -2,9 +2,6 @@
 	import { onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
 	import Counter from '$lib/components/Counter.svelte';
-	import Autoscroll from '$lib/components/Autoscroll.svelte';
-	import AutoscrollChallenge from '$lib/components/AutoscrollChallenge.svelte';
-	import { fade } from 'svelte/transition';
 
 	// TODO: Server connection
 
@@ -12,38 +9,26 @@
 	let challenge = 'Design a new product for the smallest target group (including you)!';
 	let player0 = 'Marcel';
 	let player1 = 'Alexander';
-	let player0Prompt = '...';
-	let player1Prompt = '...';
 
 	onMount(() => {
 		setTimeout(() => {
 			hasStarted = true;
-		}, 5000);
+		}, 2000);
 	});
 </script>
-
-{#if !hasStarted}
-	<div id="challenge-overlay" class="fixed h-screen w-screen flex flex-col items-center gap-[14px]">
-		<h1>Challenge:</h1>
-		<AutoscrollChallenge innerText={challenge} />
-	</div>
-{/if}
 
 <div
 	id="prompt-screen"
 	class="w-full h-full m-auto pt-[84px] pb-[103px] flex-col justify-between flex"
 >
 	<div class="grid w-full h-full">
-		<div class="header relative line-clamp-2" class:opacity-0={!hasStarted}>
+		<div class="header relative line-clamp-2">
 			<p>{challenge}</p>
 			<div class="label absolute left-0 bottom-0">Challenge</div>
 		</div>
-		<div class="main relative">
-			<div class="col-left">
-				<Autoscroll
-					--padding-bottom="56px"
-					innerText={'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.'}
-				/>
+		<div class="main relative" class:opacity-125={!hasStarted}>
+			<div class="col-left flex justify-center items-center pointer-events-none">
+				<canvas width="512" height="512" />
 			</div>
 			<div class="col-mid flex flex-col justify-between items-center">
 				<div id="prompt-clock" class="flex flex-col justify-center">
@@ -59,8 +44,8 @@
 					</p>
 				</div>
 			</div>
-			<div class="col-right">
-				<Autoscroll --padding-bottom="56px" innerText={player1Prompt} />
+			<div class="col-right flex justify-center items-center pointer-events-none">
+				<canvas width="512" height="512" />
 			</div>
 			<div class="footer">
 				<div class="absolute left-0 bottom-0">{player0}</div>
@@ -72,6 +57,7 @@
 
 {#if hasStarted}
 	<Counter
+		end="Scribble!"
 		onEnd={() => {
 			console.log('Started!');
 			document.querySelectorAll('.marquee').forEach((marquee) => {
@@ -82,29 +68,6 @@
 {/if}
 
 <style lang="scss">
-	#challenge-overlay {
-		position: fixed;
-		padding-top: 117px;
-		flex-shrink: 0;
-		background: rgba(0, 0, 0, 0.875);
-		z-index: 190;
-
-		h1 {
-			padding: 21px 27px;
-			width: 774px;
-			height: 200px;
-			width: fit-content;
-			border: 2px solid #6eebea;
-			background: #1c1f22;
-			color: #fff;
-			text-align: center;
-			font-size: 120px;
-			font-style: normal;
-			font-weight: 700;
-			line-height: normal;
-		}
-	}
-
 	#prompt-screen .grid {
 		grid-template-rows: 200px 646px;
 		row-gap: 47px;
@@ -156,11 +119,14 @@
 		grid-template-rows: 1fr;
 		column-gap: 1rem;
 
+		&.opacity-125 {
+			opacity: 0.125;
+		}
+
 		.col-left,
 		.col-right {
 			border: 2px solid #6eebea;
 			background: #1c1f22;
-			max-height: 646px;
 		}
 
 		.col-mid {

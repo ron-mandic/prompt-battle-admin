@@ -31,7 +31,7 @@
 		id="counter"
 		class:starting
 		class="flex justify-center items-center w-[774px] text-center font-bold"
-		out:fly={{ delay: 250, duration: 300, x: 0, y: -100, opacity: 0, easing: quintOut }}
+		out:fly={{ delay: 375, duration: 300, x: 0, y: -100, opacity: 0, easing: quintOut }}
 	>
 		<span class:starting>{count <= 0 ? end : count}</span>
 	</div>
@@ -43,7 +43,7 @@
 		position: fixed;
 		top: 50%;
 		left: 50%;
-		transform: translate(-50%, -50%);
+		transform: translate(-50%, calc(-50% + 37px));
 		display: flex;
 		padding: 21px 0px;
 		color: #6eebea;
@@ -66,7 +66,7 @@
 		left: 0;
 		width: 100vw;
 		height: 100vh;
-		background: rgba(0, 0, 0, 0.75);
+		background: rgba(0, 0, 0, 0.875);
 		z-index: 997;
 	}
 
