@@ -1,3 +1,4 @@
+const TEXT_P = "<p class='font-thin'><span class='font-bold'>Prompt</span>Battle</p>";
 const TEXT_H1 = "<h1 class='font-thin'><span class='font-bold'>Prompt</span>Battle</h1>";
 
 const NUMBER_PLAYERS = 8;
@@ -75,6 +76,7 @@ const HTTP_SERVER_OPTIONS = {
 };
 
 export {
+	TEXT_P,
 	TEXT_H1,
 	NUMBER_PLAYERS,
 	PROMPT_BATTLE_SCHEDULE_41,

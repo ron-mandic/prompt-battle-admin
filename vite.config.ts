@@ -62,7 +62,6 @@ const webSocketServer = {
 		setInterval(() => {
 			// if (pT.__map__.size === 0) console.log('Waiting for both players ...');
 			// if (pT.__map__.size === 1) console.log('Waiting for the last player ...');
-
 			console.log('Players:', pT.__map__);
 		}, 1000);
 	}

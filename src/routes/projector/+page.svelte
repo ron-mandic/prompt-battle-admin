@@ -3,28 +3,14 @@
 	import { onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
 
-	let socket: Socket = io('http://localhost:5173');
-	let player0 = '';
-	let player1 = '';
+	let player0 = 'Marcel';
+	let player1 = 'Peter';
 
-	onMount(() => {
-		socket.on('connect', () => {
-			socket.emit('server:admin:__connect__', socket.id);
-		});
-
-		socket.on('server:admin:showInputs', ({ i, value }) => {
-			if (i === 0) player0 = value;
-			if (i === 1) player1 = value;
-		});
-
-		return () => {
-			socket.disconnect();
-		};
-	});
+	// TODO: Server connection
 </script>
 
 <div class="w-full h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
-	<div class="top">
+	<div class="top h-screen flex flex-col justify-center">
 		<h1 class="uppercase text-center w-full">{@html TEXT_H1}</h1>
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0" class="player py-[25px]">
@@ -36,28 +22,19 @@
 			</div>
 		</div>
 	</div>
-	<div class="bottom flex flex-col items-center gap-[28px]">
-		<a href="/admin?mode=P" class="link-button flex flex-col">
-			<div class="flex-col flex items-center mt-[8px]">
-				<span class="text">start</span>
-				<span class="text-addition">(Prompt only)</span>
-			</div>
-		</a>
-		<a href="/admin?mode=PS" class="link-button flex flex-col">
-			<div class="flex-col flex items-center mt-[8px]">
-				<span class="text">start</span>
-				<span class="text-addition">(Prompt & Scribble)</span>
-			</div>
-		</a>
-	</div>
 </div>
 
 <style lang="scss">
+	.top {
+		margin-top: -148px;
+	}
+
 	h1 {
 		color: #fff;
 		font-size: 170px;
 		font-style: normal;
-		line-height: normal;
+		line-height: 1;
+		margin-bottom: 107px;
 	}
 
 	.vs {
@@ -108,31 +85,6 @@
 				animation: blink 1s ease-in-out infinite;
 				border: none;
 			}
-		}
-	}
-
-	.link-button {
-		width: 774px;
-		height: 200px;
-		border: 2px solid #6eebea;
-		background: #1c1f22;
-		padding: 1px 0 0.5rem;
-
-		.text {
-			color: #6eebea;
-			text-align: center;
-			font-size: 80px;
-			font-style: normal;
-			font-weight: 700;
-			line-height: normal;
-		}
-
-		.text-addition {
-			color: #6eebea;
-			font-size: 50px;
-			font-style: normal;
-			font-weight: 700;
-			line-height: normal;
 		}
 	}
 
