@@ -48,8 +48,8 @@
 				<canvas width="512" height="512" />
 			</div>
 			<div class="footer">
-				<div class="absolute left-0 bottom-0">{player0}</div>
-				<div class="absolute right-0 bottom-0">{player1}</div>
+				<div class="absolute left-0 bottom-0 px-2">{player0}</div>
+				<div class="absolute right-0 bottom-0 px-2">{player1}</div>
 			</div>
 		</div>
 	</div>
