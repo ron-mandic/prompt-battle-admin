@@ -5,56 +5,75 @@
 	let ref: HTMLDivElement;
 	let refText: string;
 	let overflows = false;
+	let direction: 'up' | 'down';
+	let TIME_FACTOR = 10;
 
 	export let disableScrollbar = false;
 	export let route = 'prompt';
-	export let duration = 3500;
+	export let duration = 2000;
+	export let delay = 2500;
 	export let innerText: string;
+	export let constrainOverflowBy = 0;
 
-	let attributes = disableScrollbar
-		? {
-				'data-disable-scrollbar': disableScrollbar
-			}
-		: {};
+	const attribute = {
+		'data-disable-scrollbar': disableScrollbar
+	};
+	let attributes = disableScrollbar ? attribute : {};
 
 	onMount(() => {
+		direction = ref?.scrollTop === ref?.scrollHeight ? 'down' : 'up';
 		return () => clearInterval(loop);
 	});
 
-	function autoscroll(ref: HTMLElement) {
-		loop = setInterval(function () {
-			scrollToBottom(ref);
+	function autoscroll(ref: HTMLElement, scrollPos: number, duration: number) {
+		let start = ref?.scrollTop;
+		if (start === undefined) return;
 
-			setTimeout(function () {
-				scrollToTop(ref);
-			}, duration);
-		}, duration * 2);
-	}
+		let end = scrollPos;
+		let dir = start < end ? 1 : -1;
+		let scrollRange = ref.scrollHeight - ref.clientHeight;
+		let scrollPerDuration = (scrollRange / duration) * TIME_FACTOR;
 
-	function scrollToTop(ref: HTMLElement) {
-		ref?.scrollTo({
-			top: 0,
-			behavior: 'smooth'
-		});
-	}
-	function scrollToBottom(ref: HTMLElement) {
-		ref?.scrollTo({
-			top: ref.scrollHeight,
-			behavior: 'smooth'
-		});
+		let t = 0;
+		let acc = scrollPerDuration;
+
+		let loop = setInterval(() => {
+			ref.scrollTo({
+				top: start + acc * dir
+			});
+
+			acc += scrollPerDuration;
+			t += TIME_FACTOR;
+
+			if (t >= duration) {
+				direction = direction === 'up' ? 'down' : 'up';
+				clearInterval(loop);
+				return;
+			}
+		}, TIME_FACTOR);
 	}
 
 	$: if (refText) {
-		overflows = ref?.scrollHeight > ref?.clientHeight;
-		console.log(refText.length, overflows);
+		overflows = ref?.scrollHeight - constrainOverflowBy > ref?.clientHeight;
 	}
 
-	$: if (overflows) {
-		autoscroll(ref);
+	$: if (overflows && direction === 'up') {
+		// console.log('Up!');
+
+		setTimeout(() => {
+			autoscroll(ref, ref?.scrollHeight, duration);
+		}, delay);
+	}
+	$: if (overflows && direction === 'down') {
+		// console.log('Down!');
+
+		setTimeout(() => {
+			autoscroll(ref, 0, duration);
+		}, delay);
 	}
 </script>
 
-<div class="w-full h-full pointer-events-none" bind:this={ref} {...attributes}>
+<div class="w-full h-full pointer-events-none" bind:this={ref} {...attributes} data->
 	<p contenteditable bind:innerText={refText} data-route={route}>
 		{innerText}
 	</p>
@@ -65,6 +84,7 @@
 		overflow: hidden;
 		overflow-y: auto;
 		padding-bottom: var(--padding-bottom, 0);
+		padding: var(--padding, unset);
 
 		&::-webkit-scrollbar {
 			width: 10px;
@@ -91,7 +111,16 @@
 			}
 		}
 
-		p[data-route='prompt'] {
+		p[data-route='prompt-header'] {
+			color: #fff;
+			text-align: center;
+			font-size: 60px;
+			font-style: normal;
+			font-weight: 700;
+			line-height: normal;
+		}
+
+		p[data-route='prompt-main'] {
 			padding: 0.5rem;
 			color: #6eebea;
 			font-size: 36px;

@@ -25,7 +25,7 @@
 {#if !hasStarted}
 	<div id="challenge-overlay" class="fixed h-screen w-screen flex flex-col items-center gap-[14px]">
 		<h1>Challenge:</h1>
-		<AutoscrollChallenge innerText={challenge} />
+		<AutoscrollChallenge innerText={challenge} --padding-bottom="56px" />
 	</div>
 {/if}
 
@@ -34,16 +34,19 @@
 	class="w-full h-full m-auto pt-[84px] pb-[103px] flex-col justify-between flex"
 >
 	<div class="grid w-full h-full">
-		<div class="header relative line-clamp-2" class:opacity-0={!hasStarted}>
-			<p>{challenge}</p>
+		<div class="header relative" class:opacity-0={!hasStarted}>
+			<Autoscroll
+				route="prompt-header"
+				innerText={challenge}
+				disableScrollbar
+				constrainOverflowBy={46}
+				--padding="20px 20px 56px"
+			/>
 			<div class="label absolute left-0 bottom-0">Challenge</div>
 		</div>
 		<div class="main relative">
 			<div class="col-left">
-				<Autoscroll
-					--padding-bottom="56px"
-					innerText={'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.'}
-				/>
+				<Autoscroll route="prompt-main" innerText={player0Prompt} --padding-bottom="56px" />
 			</div>
 			<div class="col-mid flex flex-col justify-between items-center">
 				<div id="prompt-clock" class="flex flex-col justify-center">
@@ -60,7 +63,7 @@
 				</div>
 			</div>
 			<div class="col-right">
-				<Autoscroll --padding-bottom="56px" innerText={player1Prompt} />
+				<Autoscroll route="prompt-main" innerText={player1Prompt} --padding-bottom="56px" />
 			</div>
 			<div class="footer">
 				<div class="absolute left-0 bottom-0">{player0}</div>
@@ -137,17 +140,7 @@
 		flex-shrink: 0;
 		border: 2px solid #6eebea;
 		background: #1c1f22;
-		padding: 20px;
 		z-index: 999;
-
-		p {
-			color: #fff;
-			text-align: center;
-			font-size: 60px;
-			font-style: normal;
-			font-weight: 700;
-			line-height: normal;
-		}
 	}
 
 	.main {

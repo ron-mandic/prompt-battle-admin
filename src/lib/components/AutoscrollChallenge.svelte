@@ -6,7 +6,7 @@
 	let refText: string;
 	let overflows = false;
 
-	export let duration = 3500;
+	export let duration = 1500;
 	export let innerText: string;
 
 	onMount(() => {
@@ -38,7 +38,6 @@
 
 	$: if (refText) {
 		overflows = ref?.scrollHeight > ref?.clientHeight;
-		console.log(refText.length, overflows);
 	}
 
 	$: if (overflows) {
@@ -65,17 +64,19 @@
 		background: #1c1f22;
 		width: 1888px;
 		padding: 20px 17px;
+		padding-bottom: var(--padding-bottom, 0);
 
 		&::-webkit-scrollbar {
-			width: 10px;
+			width: 0;
+			scrollbar-width: none;
 		}
 
 		&::-webkit-scrollbar-track {
-			background: transparent;
+			background: none;
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: #6eebea;
+			background: none;
 		}
 
 		p {

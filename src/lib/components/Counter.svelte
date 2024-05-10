@@ -3,11 +3,12 @@
 	import { fly } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 
-	export let seconds = 3;
+	export let t0 = 3;
+	export let tN = -1;
 	export let end = 'Prompt!';
-	export let onEnd;
+	export let onEnd = () => console.log(end);
 
-	let count = seconds;
+	let count = t0;
 	let starting = false;
 	let covering = true;
 
@@ -17,7 +18,7 @@
 			if (count === 0) {
 				starting = true;
 			}
-			if (count === -1) {
+			if (count === tN) {
 				covering = false;
 				clearInterval(interval);
 				onEnd();
@@ -33,7 +34,11 @@
 		class="flex justify-center items-center w-[774px] text-center font-bold"
 		out:fly={{ delay: 375, duration: 300, x: 0, y: -100, opacity: 0, easing: quintOut }}
 	>
-		<span class:starting>{count <= 0 ? end : count}</span>
+		<div class:starting={count <= 0 || starting}>
+			<slot>
+				<span>{count <= 0 ? end : count}</span>
+			</slot>
+		</div>
 	</div>
 	<div id="counter-overlay"></div>
 {/if}
@@ -55,7 +60,7 @@
 		user-select: none;
 		z-index: 998;
 
-		span.starting {
+		div.starting {
 			animation: flash 2s infinite;
 		}
 	}
