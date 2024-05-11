@@ -68,6 +68,10 @@ const webSocketServer = {
 };
 
 export default defineConfig({
+	server: {
+		port: 3000,
+		strictPort: true
+	},
 	plugins: [sveltekit(), webSocketServer],
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
