@@ -45,7 +45,7 @@
 				goto(`/admin?${$page.url.searchParams.toString()}`);
 				break;
 			}
-			case 'round:new': {
+			case 'round=new': {
 				goto('/');
 				break;
 			}
