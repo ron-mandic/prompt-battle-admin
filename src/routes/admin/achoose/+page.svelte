@@ -69,11 +69,11 @@
 							target.dataset.status = 'yes';
 							haveChosen = true;
 
-							player0Score = (+player0Score + 1).toString();
 							socket.emit('a:sendBattleData/admin/achoose', {
-								player0Score: player0Score + 1,
+								player0Score: (+player0Score + 1).toString(),
 								player1Score
 							});
+							player0Score = (+player0Score + 1).toString();
 
 							setTimeout(() => {
 								goto(`/admin/next?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
@@ -110,11 +110,11 @@
 							target.dataset.status = 'yes';
 							haveChosen = true;
 
-							player1Score = (+player1Score + 1).toString();
 							socket.emit('a:sendBattleData/admin/achoose', {
 								player0Score,
-								player1Score: player1Score + 1
+								player1Score: (+player1Score + 1).toString()
 							});
+							player1Score = (+player1Score + 1).toString();
 
 							setTimeout(() => {
 								goto(`/admin/next?${$page.url.searchParams.toString()}`); // ...&guuid=g-...

@@ -12,9 +12,14 @@
 	let player1: string;
 	let player1Score: string;
 
+	let message: string;
+
 	onMount(() => {
 		socket.on('connect', () => {
-			socket.emit('c:initClient', 'ADMIN').emit('a:requestEvent', 's:sendBattleData');
+			socket
+				.emit('c:initClient', 'ADMIN')
+				.emit('a:requestEvent', 's:sendBattleData')
+				.emit('a:requestEvent', 's:prepareNextRound');
 		});
 		socket.on('s:setPlayerNames', ({ playerName0, playerName1 }) => {
 			player0 = playerName0;
@@ -27,7 +32,30 @@
 				player1Score = _player1Score;
 			}
 		);
+		socket.on('s:prepareNextRound', (_message) => {
+			message = _message;
+			console.log(message);
+		});
 	});
+
+	function handleButtonClick() {
+		// for the admin
+		switch (message) {
+			case 'round=current': {
+				goto(`/admin?${$page.url.searchParams.toString()}`);
+				break;
+			}
+			case 'round:new': {
+				goto('/');
+				break;
+			}
+			default:
+				break;
+		}
+
+		// for the client, redirected by the server
+		socket.emit('a:prepareNextRound', message);
+	}
 </script>
 
 <div class="relative w-full h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
@@ -53,7 +81,7 @@
 			</div>
 		</div>
 		<div class="mt-[181px] w-full h-auto flex justify-center">
-			<button class="link-button flex flex-col">
+			<button class="link-button flex flex-col" on:click={handleButtonClick}>
 				<div class="flex-col flex items-center mt-[8px]">
 					<span class="text">start</span>
 					<span class="text-addition">(Next round)</span>
