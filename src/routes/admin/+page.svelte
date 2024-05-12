@@ -3,13 +3,13 @@
 	import { onMount } from 'svelte';
 
 	let socket: Socket = io('http://localhost:3000');
-	let player0Score = 2;
-	let player1Score = 1;
+	let player0 = '';
+	let player1 = '';
 
 	onMount(() => {
-		socket.on('connect', () => {
-			socket.emit('a:initAdmin');
-		});
+		return () => {
+			socket.disconnect();
+		};
 	});
 </script>
 
@@ -17,18 +17,18 @@
 	<div class="top flex flex-col items-start">
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0" class="player py-[25px]">
-				<span class="relative">Andreas</span>
+				<span class="relative">{player0}</span>
 			</div>
 			<div id="player-score" class="w-full">
 				<p>current score:</p>
 				<p class="flex w-full justify-between">
-					<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
+					<span class="inline-block flex-grow flex-[33%]">1</span>
 					<span class="inline-block flex-grow flex-[33%]">-</span>
-					<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
+					<span class="inline-block flex-grow flex-[33%]">1</span>
 				</p>
 			</div>
 			<div id="player-1" class="player py-[25px]">
-				<span class="relative">Felix</span>
+				<span class="relative">{player1}</span>
 			</div>
 		</div>
 	</div>

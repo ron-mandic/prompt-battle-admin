@@ -2,12 +2,20 @@
 	import { TEXT_H1 } from '$lib/ts/constants';
 	import { onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	let socket: Socket = io('http://localhost:3000');
 	let player0 = '';
 	let player1 = '';
+	let mode: string;
 
 	onMount(() => {
+		socket.on('s:setPlayerNames', ({ playerName0, playerName1 }) => {
+			player0 = playerName0;
+			player1 = playerName1;
+		});
+
 		return () => {
 			socket.disconnect();
 		};
@@ -19,27 +27,43 @@
 		<h1 class="uppercase text-center w-full">{@html TEXT_H1}</h1>
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0" class="player py-[25px]">
-				<span class="relative">{player0}</span>
+				<span class="relative px-4">{player0}</span>
 			</div>
 			<div class="vs">vs</div>
 			<div id="player-1" class="player py-[25px]">
-				<span class="relative">{player1}</span>
+				<span class="relative px-4">{player1}</span>
 			</div>
 		</div>
 	</div>
 	<div class="bottom flex flex-col items-center gap-[28px]">
-		<a href="/admin?mode=P" class="link-button flex flex-col">
+		<button
+			class="link-button flex flex-col"
+			class:opacity-30={mode && mode === 'ps'}
+			on:click={() => {
+				mode = 'p';
+				socket.emit('a:setMode', mode);
+				$page.url.searchParams.set('mode', mode);
+			}}
+		>
 			<div class="flex-col flex items-center mt-[8px]">
 				<span class="text">start</span>
 				<span class="text-addition">(Prompt only)</span>
 			</div>
-		</a>
-		<a href="/admin?mode=PS" class="link-button flex flex-col">
+		</button>
+		<button
+			class="link-button flex flex-col"
+			class:opacity-30={mode && mode === 'p'}
+			on:click={() => {
+				mode = 'ps';
+				socket.emit('a:setMode', mode);
+				$page.url.searchParams.set('mode', mode);
+			}}
+		>
 			<div class="flex-col flex items-center mt-[8px]">
 				<span class="text">start</span>
 				<span class="text-addition">(Prompt & Scribble)</span>
 			</div>
-		</a>
+		</button>
 	</div>
 </div>
 
@@ -98,8 +122,13 @@
 				-webkit-animation: blink 1s ease-in-out infinite;
 				animation: blink 1s ease-in-out infinite;
 				border: none;
+				translate: -0.5rem 0;
 			}
 		}
+	}
+
+	button {
+		all: unset;
 	}
 
 	.link-button {
@@ -108,6 +137,10 @@
 		border: 2px solid #6eebea;
 		background: #1c1f22;
 		padding: 1px 0 0.5rem;
+
+		&.opacity-30 {
+			opacity: 0.3;
+		}
 
 		.text {
 			color: #6eebea;
