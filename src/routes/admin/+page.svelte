@@ -13,7 +13,12 @@
 	let player1Score: string;
 	let dataGUUID: string;
 
+	let mode: string;
+	let label = 'Players are prompting';
+
 	onMount(() => {
+		mode = $page.url.searchParams.get('mode')!;
+
 		socket.on('connect', () => {
 			socket.emit('c:initClient', 'ADMIN').emit('a:requestEvent', 's:sendBattleData');
 		});
@@ -32,6 +37,23 @@
 				goto(`?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
 			}
 		);
+		socket.on('s:sendRoute/prompt', () => {
+			switch (mode) {
+				case 'p':
+					setTimeout(() => {
+						goto(`/admin/pchoose?${$page.url.searchParams.toString()}`);
+					}, 1000);
+					break;
+				case 'ps':
+					label = 'Players are scribbling';
+					break;
+			}
+		});
+		socket.on('s:sendRoute/scribble', () => {
+			setTimeout(() => {
+				goto(`/admin/pchoose?${$page.url.searchParams.toString()}`);
+			}, 1000);
+		});
 
 		return () => {
 			socket.disconnect();
@@ -43,7 +65,7 @@
 	<div class="top flex flex-col items-start">
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0" class="player py-[25px]">
-				<span class="relative">{player0}</span>
+				<span class="relative px-4">{player0}</span>
 			</div>
 			<div id="player-score" class="w-full">
 				<p>current score:</p>
@@ -54,12 +76,12 @@
 				</p>
 			</div>
 			<div id="player-1" class="player py-[25px]">
-				<span class="relative">{player1}</span>
+				<span class="relative px-4">{player1}</span>
 			</div>
 		</div>
 	</div>
 
-	<p id="system-status" class="absolute w-full text-center bottom-[174px]">Players are prompting</p>
+	<p id="system-status" class="absolute w-full text-center bottom-[174px]">{label}</p>
 
 	<div class="footer absolute bottom-0 w-full flex justify-between items-center">
 		<button id="btn-restart">restart round</button>

@@ -1,8 +1,51 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { Socket, io } from 'socket.io-client';
 	import IconCheck from '$lib/components/IconCheck.svelte';
+	import { onMount } from 'svelte';
 
-	let player0Score = 2;
-	let player1Score = 1;
+	const socket: Socket = io('http://localhost:3000', {
+		reconnection: true
+	});
+	let player0: string;
+	let player0Score: string;
+	let player1: string;
+	let player1Score: string;
+
+	let dataGUUID: string;
+	let mode: string;
+	let srcImageA: string;
+	let srcImageB: string;
+
+	let haveChosen = false;
+
+	onMount(() => {
+		mode = $page.url.searchParams.get('mode')!;
+
+		socket.on('connect', () => {
+			socket
+				.emit('c:initClient', 'ADMIN')
+				.emit('a:requestEvent', 's:sendBattleData')
+				.emit('a:requestEvent', 's:sendImage/results');
+		});
+		socket.on('s:setPlayerNames', ({ playerName0, playerName1 }) => {
+			player0 = playerName0;
+			player1 = playerName1;
+		});
+		socket.on(
+			's:sendBattleData',
+			({ player0Score: _player0Score, player1Score: _player1Score, guuid }) => {
+				player0Score = _player0Score;
+				player1Score = _player1Score;
+				dataGUUID = guuid;
+			}
+		);
+		socket.on('s:sendImage/results', ({ player0Image, player1Image }) => {
+			srcImageA = 'data:image/png;base64,' + player0Image;
+			srcImageB = 'data:image/png;base64,' + player1Image;
+		});
+	});
 </script>
 
 <div class="relative w-full debug h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
@@ -10,14 +53,34 @@
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0">
 				<div class="player py-[25px] relative">
-					<span class="relative">Andreas</span>
+					<span class="relative px-4">{player0}</span>
 					<div class="absolute top-1/2 -left-24 -translate-x-1/2 -translate-y-1/2">
 						<IconCheck />
 					</div>
 				</div>
 				<div class="image-container flex items-center justify-center w-full h-[420px] mt-8">
-					<div class="image" data-status="yes">
-						<img src="https://placehold.co/378x378" alt="" />
+					<div
+						class="image"
+						data-status="no"
+						on:click|once={(e) => {
+							if (haveChosen) return;
+
+							const target = e.currentTarget;
+							target.dataset.status = 'yes';
+							haveChosen = true;
+
+							player0Score = (+player0Score + 1).toString();
+							socket.emit('a:sendBattleData/admin/achoose', {
+								player0Score: player0Score + 1,
+								player1Score
+							});
+
+							setTimeout(() => {
+								goto(`/admin/next?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
+							}, 2000);
+						}}
+					>
+						<img width="378" height="378" src={srcImageA} alt="" />
 					</div>
 				</div>
 			</div>
@@ -31,21 +94,49 @@
 			</div>
 			<div id="player-1">
 				<div class="player py-[25px] relative">
-					<span class="relative">Andreas</span>
+					<span class="relative px-4">{player1}</span>
 					<div class="absolute top-1/2 -right-24 translate-x-1/2 -translate-y-1/2">
 						<IconCheck />
 					</div>
 				</div>
 				<div class="image-container flex items-center justify-center w-full h-[420px] mt-8">
-					<div class="image" data-status="no">
-						<img src="https://placehold.co/378x378" alt="" />
+					<div
+						class="image"
+						data-status="no"
+						on:click|once={(e) => {
+							if (haveChosen) return;
+
+							const target = e.currentTarget;
+							target.dataset.status = 'yes';
+							haveChosen = true;
+
+							player1Score = (+player1Score + 1).toString();
+							socket.emit('a:sendBattleData/admin/achoose', {
+								player0Score,
+								player1Score: player1Score + 1
+							});
+
+							setTimeout(() => {
+								goto(`/admin/next?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
+							}, 2000);
+						}}
+					>
+						<img width="378" height="378" src={srcImageB} alt="" />
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<p id="system-status" class="absolute w-full text-center bottom-[174px]">Audience is choosing</p>
+	{#if !haveChosen}
+		<p id="system-status" class="absolute w-full text-center bottom-[174px]">
+			Audience is choosing
+		</p>
+	{:else}
+		<p id="system-status" class="absolute chosen w-full text-center bottom-[174px]">
+			Audience has chosen
+		</p>
+	{/if}
 
 	<div class="footer absolute bottom-0 w-full flex justify-between items-center">
 		<button id="btn-restart">restart round</button>
@@ -118,6 +209,11 @@
 			animation: loading 6s infinite ease-in-out;
 			display: inline-block;
 		}
+
+		&.chosen::after {
+			content: '!';
+			animation: none;
+		}
 	}
 
 	.image-container {
@@ -125,7 +221,7 @@
 		flex-shrink: 0;
 
 		.image {
-			height: 420px;
+			width: 420px;
 			height: 420px;
 			padding: 21px;
 			aspect-ratio: 1/1;

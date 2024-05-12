@@ -1,6 +1,33 @@
 <script lang="ts">
-	let player0Score = 2;
-	let player1Score = 1;
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { Socket, io } from 'socket.io-client';
+	import { onMount } from 'svelte';
+
+	const socket: Socket = io('http://localhost:3000', {
+		reconnection: true
+	});
+	let player0: string;
+	let player0Score: string;
+	let player1: string;
+	let player1Score: string;
+
+	onMount(() => {
+		socket.on('connect', () => {
+			socket.emit('c:initClient', 'ADMIN').emit('a:requestEvent', 's:sendBattleData');
+		});
+		socket.on('s:setPlayerNames', ({ playerName0, playerName1 }) => {
+			player0 = playerName0;
+			player1 = playerName1;
+		});
+		socket.on(
+			's:sendBattleData',
+			({ player0Score: _player0Score, player1Score: _player1Score }) => {
+				player0Score = _player0Score;
+				player1Score = _player1Score;
+			}
+		);
+	});
 </script>
 
 <div class="relative w-full h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
@@ -8,7 +35,7 @@
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0">
 				<div class="player py-[25px] relative">
-					<span class="relative">Andreas</span>
+					<span class="relative">{player0}</span>
 				</div>
 			</div>
 			<div id="player-score" class="w-full self-start mt-4">
@@ -21,7 +48,7 @@
 			</div>
 			<div id="player-1">
 				<div class="player py-[25px] relative">
-					<span class="relative">Andreas</span>
+					<span class="relative">{player1}</span>
 				</div>
 			</div>
 		</div>

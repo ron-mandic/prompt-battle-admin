@@ -1,15 +1,71 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { scale } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+	import { Socket, io } from 'socket.io-client';
+	import { onMount } from 'svelte';
 	import ImageThumbnail from '$lib/components/ImageThumbnail.svelte';
 	import IconCross from '$lib/components/IconCross.svelte';
 	import IconCheck from '$lib/components/IconCheck.svelte';
-	import { scale } from 'svelte/transition';
-	import { quintOut } from 'svelte/easing';
 
-	let player0Score = 2;
-	let player1Score = 1;
+	const socket: Socket = io('http://localhost:3000', {
+		reconnection: true
+	});
+	let player0: string;
+	let player0Score: string;
+	let player1: string;
+	let player1Score: string;
+	let dataGUUID: string;
 
+	let mode: string;
+	let playerNumberA: string;
+	let playerNumberB: string;
+	let imageIndexA: string;
+	let imageIndexB: string;
 	let boolA = false;
 	let boolB = false;
+
+	onMount(() => {
+		mode = $page.url.searchParams.get('mode')!;
+
+		socket.on('connect', () => {
+			socket.emit('c:initClient', 'ADMIN').emit('a:requestEvent', 's:sendBattleData');
+		});
+		socket.on('s:setPlayerNames', ({ playerName0, playerName1 }) => {
+			player0 = playerName0;
+			player1 = playerName1;
+		});
+		socket.on(
+			's:sendBattleData',
+			({ player0Score: _player0Score, player1Score: _player1Score, guuid }) => {
+				player0Score = _player0Score;
+				player1Score = _player1Score;
+				dataGUUID = guuid;
+
+				$page.url.searchParams.set('guuid', dataGUUID);
+				goto(`?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
+			}
+		);
+		socket.on('s:sendImageInfo/results', ({ id, imageIndex: _imageIndex }) => {
+			if (id === '1') {
+				playerNumberA = id;
+				imageIndexA = _imageIndex;
+				boolA = true;
+			}
+			if (id === '2') {
+				playerNumberB = id;
+				imageIndexB = _imageIndex;
+				boolB = true;
+			}
+		});
+	});
+
+	$: if (boolA && boolB) {
+		setTimeout(() => {
+			goto(`/admin/achoose?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
+		}, 1000);
+	}
 </script>
 
 <div class="relative w-full debug h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
@@ -17,7 +73,7 @@
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0">
 				<div class="player py-[25px] relative">
-					<span class="relative">Andreas</span>
+					<span class="relative px-4">{player0}</span>
 					{#if boolA}
 						<div
 							class="absolute top-1/2 -left-24 -translate-x-1/2 -translate-y-1/2"
@@ -47,9 +103,9 @@
 					{/if}
 				</div>
 				<div class="image-thumbnails flex justify-between items-center pt-16">
-					<ImageThumbnail chosen />
-					<ImageThumbnail chosen />
-					<ImageThumbnail chosen />
+					<ImageThumbnail chosen={playerNumberA === '1' && +imageIndexA === 0} />
+					<ImageThumbnail chosen={playerNumberA === '1' && +imageIndexA === 1} />
+					<ImageThumbnail chosen={playerNumberA === '1' && +imageIndexA === 2} />
 				</div>
 			</div>
 			<div id="player-score" class="w-full self-start mt-4">
@@ -62,7 +118,7 @@
 			</div>
 			<div id="player-1">
 				<div class="player py-[25px] relative">
-					<span class="relative">Andreas</span>
+					<span class="relative px-4">{player1}</span>
 					{#if boolB}
 						<div
 							class="absolute top-1/2 -right-24 translate-x-1/2 -translate-y-1/2"
@@ -92,9 +148,9 @@
 					{/if}
 				</div>
 				<div class="image-thumbnails flex justify-between items-center pt-16">
-					<ImageThumbnail chosen />
-					<ImageThumbnail chosen />
-					<ImageThumbnail chosen />
+					<ImageThumbnail chosen={playerNumberB === '2' && +imageIndexB === 0} />
+					<ImageThumbnail chosen={playerNumberB === '2' && +imageIndexB === 1} />
+					<ImageThumbnail chosen={playerNumberB === '2' && +imageIndexB === 2} />
 				</div>
 			</div>
 		</div>
