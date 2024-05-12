@@ -5,12 +5,18 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
-	let socket: Socket = io('http://localhost:3000');
+	const socket: Socket = io('http://localhost:3000', {
+		reconnection: true
+	});
 	let player0 = '';
 	let player1 = '';
 	let mode: string;
+	let hasStarted = false;
 
 	onMount(() => {
+		socket.on('connect', () => {
+			socket.emit('c:initClient', 'ADMIN');
+		});
 		socket.on('s:setPlayerNames', ({ playerName0, playerName1 }) => {
 			player0 = playerName0;
 			player1 = playerName1;
@@ -20,6 +26,12 @@
 			socket.disconnect();
 		};
 	});
+
+	$: if (hasStarted && mode) {
+		setTimeout(() => {
+			goto(`/admin?mode=${mode}`);
+		}, 1000);
+	}
 </script>
 
 <div class="w-full h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
@@ -41,8 +53,10 @@
 			class:opacity-30={mode && mode === 'ps'}
 			on:click={() => {
 				mode = 'p';
-				socket.emit('a:setMode', mode);
+				socket.emit('a:setMode', { mode, isNew: true });
 				$page.url.searchParams.set('mode', mode);
+
+				hasStarted = true;
 			}}
 		>
 			<div class="flex-col flex items-center mt-[8px]">
@@ -55,8 +69,10 @@
 			class:opacity-30={mode && mode === 'p'}
 			on:click={() => {
 				mode = 'ps';
-				socket.emit('a:setMode', mode);
+				socket.emit('a:setMode', { mode, isNew: true });
 				$page.url.searchParams.set('mode', mode);
+
+				hasStarted = true;
 			}}
 		>
 			<div class="flex-col flex items-center mt-[8px]">

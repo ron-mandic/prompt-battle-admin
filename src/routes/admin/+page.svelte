@@ -1,12 +1,38 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { Socket, io } from 'socket.io-client';
 	import { onMount } from 'svelte';
 
-	let socket: Socket = io('http://localhost:3000');
-	let player0 = '';
-	let player1 = '';
+	const socket: Socket = io('http://localhost:3000', {
+		reconnection: true
+	});
+	let player0: string;
+	let player0Score: string;
+	let player1: string;
+	let player1Score: string;
+	let dataGUUID: string;
 
 	onMount(() => {
+		socket.on('connect', () => {
+			socket.emit('c:initClient', 'ADMIN').emit('a:requestEvent', 's:sendBattleData');
+		});
+		socket.on('s:setPlayerNames', ({ playerName0, playerName1 }) => {
+			player0 = playerName0;
+			player1 = playerName1;
+		});
+		socket.on(
+			's:sendBattleData',
+			({ player0Score: _player0Score, player1Score: _player1Score, guuid }) => {
+				player0Score = _player0Score;
+				player1Score = _player1Score;
+				dataGUUID = guuid;
+
+				$page.url.searchParams.set('guuid', dataGUUID);
+				goto(`?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
+			}
+		);
+
 		return () => {
 			socket.disconnect();
 		};
@@ -22,9 +48,9 @@
 			<div id="player-score" class="w-full">
 				<p>current score:</p>
 				<p class="flex w-full justify-between">
-					<span class="inline-block flex-grow flex-[33%]">1</span>
+					<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
 					<span class="inline-block flex-grow flex-[33%]">-</span>
-					<span class="inline-block flex-grow flex-[33%]">1</span>
+					<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
 				</p>
 			</div>
 			<div id="player-1" class="player py-[25px]">
