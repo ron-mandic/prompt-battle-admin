@@ -3,10 +3,15 @@
 	import { onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
 
+	let socket: Socket = io('http://localhost:3000');
 	let player0 = 'Marcel';
 	let player1 = 'Peter';
 
-	// TODO: Server connection
+	onMount(() => {
+		socket.on('connect', () => {
+			socket.emit('p:initProjector');
+		});
+	});
 </script>
 
 <div class="w-full h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">

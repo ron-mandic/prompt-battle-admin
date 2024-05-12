@@ -1,6 +1,16 @@
 <script lang="ts">
+	import { Socket, io } from 'socket.io-client';
+	import { onMount } from 'svelte';
+
+	let socket: Socket = io('http://localhost:3000');
 	let player0Score = 2;
 	let player1Score = 1;
+
+	onMount(() => {
+		socket.on('connect', () => {
+			socket.emit('a:initAdmin');
+		});
+	});
 </script>
 
 <div class="relative w-full debug h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">

@@ -3,20 +3,11 @@
 	import { onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
 
-	let socket: Socket = io('http://localhost:5173');
+	let socket: Socket = io('http://localhost:3000');
 	let player0 = '';
 	let player1 = '';
 
 	onMount(() => {
-		socket.on('connect', () => {
-			socket.emit('server:admin:__connect__', socket.id);
-		});
-
-		socket.on('server:admin:showInputs', ({ i, value }) => {
-			if (i === 0) player0 = value;
-			if (i === 1) player1 = value;
-		});
-
 		return () => {
 			socket.disconnect();
 		};

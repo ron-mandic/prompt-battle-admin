@@ -68,7 +68,7 @@ const CHALLENGES = [
 	'Illustrate a scene from a fun-filled day at a theme park with roller coasters and attractions.'
 ];
 
-const URL_CLIENT = 'http://localhost:5174';
+const URL_CLIENT = 'http://localhost:1405';
 const HTTP_SERVER_OPTIONS = {
 	cors: {
 		origin: [URL_CLIENT]
