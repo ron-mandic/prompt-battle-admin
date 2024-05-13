@@ -299,4 +299,40 @@
 			opacity: 1;
 		}
 	}
+
+	@keyframes pulse {
+		from {
+			transform: scale3d(1, 1, 1);
+		}
+
+		50% {
+			transform: scale3d(1.05, 1.05, 1.05);
+		}
+
+		to {
+			transform: scale3d(1, 1, 1);
+		}
+	}
+
+	@keyframes shakeX {
+		from,
+		to {
+			transform: translate3d(0, 0, 0);
+		}
+
+		10%,
+		30%,
+		50%,
+		70%,
+		90% {
+			transform: translate3d(-10px, 0, 0);
+		}
+
+		20%,
+		40%,
+		60%,
+		80% {
+			transform: translate3d(10px, 0, 0);
+		}
+	}
 </style>
