@@ -110,6 +110,20 @@
 				}
 			}
 		});
+		socket.on('s:prepareProjector', (message) => {
+			switch (message) {
+				case 'round=current': {
+					goto(`/projector/prompt?${$page.url.searchParams.toString()}`);
+					break;
+				}
+				case 'round=new': {
+					goto('/');
+					break;
+				}
+				default:
+					break;
+			}
+		});
 	});
 
 	$: if (imgPlayer0 && imgIndex === 0 && !visiblePlayer0) {

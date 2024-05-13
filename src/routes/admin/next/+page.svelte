@@ -55,6 +55,9 @@
 
 		// for the client, redirected by the server
 		socket.emit('a:prepareNextRound', message);
+
+		// for the projector, redirected by the server
+		socket.emit('a:prepareNextRoundProjector', message);
 	}
 </script>
 
