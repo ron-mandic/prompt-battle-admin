@@ -1,20 +1,76 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { onDestroy, onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
+	import { timer, time, isRunning, isComplete, resetTimer } from '$lib/stores/timer-scribble';
 	import Counter from '$lib/components/Counter.svelte';
 
-	// TODO: Server connection
+	const socket: Socket = io('http://localhost:3000', {
+		reconnection: true
+	});
 
 	let hasStarted = false;
-	let challenge = 'Design a new product for the smallest target group (including you)!';
-	let player0 = 'Marcel';
-	let player1 = 'Alexander';
+	let dataPrompt: string;
+	let player0: string;
+	let player0Score: string;
+	let player1Score: string;
+	let player1: string;
+
+	let mode: string;
 
 	onMount(() => {
+		socket.on('connect', () => {
+			socket
+				.emit('c:initClient', 'PROJECTOR')
+				.emit('p:requestEvent', 's:sendPromptBattle')
+				.emit('p:requestEvent', 's:sendMode');
+		});
+		socket.on('s:setPlayerNames', ({ playerName0, playerName1 }) => {
+			player0 = playerName0;
+			player1 = playerName1;
+		});
+		socket.on('s:sendMode', (_mode) => {
+			mode = _mode;
+			$page.url.searchParams.set('mode', mode);
+			goto(`?${$page.url.searchParams.toString()}`); // ...?mode=...
+		});
+		socket.on(
+			's:sendPromptBattle',
+			({
+				player0: name0,
+				player1: name1,
+				player0Score: score0,
+				player1Score: score1,
+				prompts,
+				currentRound
+			}) => {
+				player0 = name0;
+				player1 = name1;
+				player0Score = score0;
+				player1Score = score1;
+				dataPrompt = prompts[currentRound - 1];
+			}
+		);
+
 		setTimeout(() => {
 			hasStarted = true;
 		}, 2000);
 	});
+
+	onDestroy(() => {
+		resetTimer();
+	});
+
+	$: if ($isComplete) {
+		setTimeout(async () => {
+			$isRunning = false;
+			$isComplete = false;
+			timer.reset();
+
+			goto(`/projector/results?${$page.url.searchParams.toString()}`);
+		}, 2000);
+	}
 </script>
 
 <div
@@ -23,7 +79,7 @@
 >
 	<div class="grid w-full h-full">
 		<div class="header relative line-clamp-2">
-			<p>{challenge}</p>
+			<p>{dataPrompt}</p>
 			<div class="label absolute left-0 bottom-0">Challenge</div>
 		</div>
 		<div class="main relative" class:opacity-125={!hasStarted}>
@@ -33,14 +89,19 @@
 			<div class="col-mid flex flex-col justify-between items-center">
 				<div id="prompt-clock" class="flex flex-col justify-center">
 					<p>time remaining:</p>
-					<p>01:00</p>
+					<p
+						class:completing={+$time.slice(3) <= 10 && $time[1] !== '1'}
+						class:complete={$isComplete}
+					>
+						{$time}
+					</p>
 				</div>
 				<div id="player-score" class="w-full self-start mt-4">
 					<p>current score:</p>
 					<p class="flex w-full justify-between">
-						<span class="inline-block flex-grow flex-[33%]">2</span>
+						<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
 						<span class="inline-block flex-grow flex-[33%]">-</span>
-						<span class="inline-block flex-grow flex-[33%]">1</span>
+						<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
 					</p>
 				</div>
 			</div>
@@ -57,9 +118,10 @@
 
 {#if hasStarted}
 	<Counter
+		t0={3}
 		end="Scribble!"
 		onEnd={() => {
-			console.log('Started!');
+			timer.start();
 			document.querySelectorAll('.marquee').forEach((marquee) => {
 				marquee.classList.add('fade');
 			});

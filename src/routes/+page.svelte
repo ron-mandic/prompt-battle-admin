@@ -28,6 +28,8 @@
 	});
 
 	$: if (hasStarted && mode) {
+		socket.emit('a:setProjector/projector/');
+
 		setTimeout(() => {
 			goto(`/admin?mode=${mode}`);
 		}, 1000);

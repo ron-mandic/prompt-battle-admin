@@ -73,6 +73,8 @@
 								player0Score: (+player0Score + 1).toString(),
 								player1Score
 							});
+							socket.emit('a:sendImageChoice', '1');
+
 							player0Score = (+player0Score + 1).toString();
 
 							setTimeout(() => {
@@ -114,6 +116,8 @@
 								player0Score,
 								player1Score: (+player1Score + 1).toString()
 							});
+							socket.emit('a:sendImageChoice', '2');
+
 							player1Score = (+player1Score + 1).toString();
 
 							setTimeout(() => {

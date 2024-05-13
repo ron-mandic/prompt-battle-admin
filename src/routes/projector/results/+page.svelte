@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
 	import Autoscroll from '$lib/components/Autoscroll.svelte';
@@ -8,60 +10,127 @@
 	import { EBannerText } from '$lib/ts/enums';
 	import { Confetti } from 'svelte-confetti';
 
-	// TODO: Server connection
+	const socket: Socket = io('http://localhost:3000', {
+		reconnection: true
+	});
 
 	const MAX_ROUNDS = 3;
 	let areChoosing = false;
-	let haveChosen = false;
+	let isVotable = false;
 	let isRegistered = true;
-
-	let challenge = 'Design a new product for the smallest target group (including you)!';
-	let player0 = 'Marcel';
-	let player1 = 'Alexander';
 
 	let showOverlay = false;
 	let showOverlayFinal = false;
 	let showNextRound = false;
 
-	let imgIndex = 0;
-	let imgPlayer0 = 'https://placehold.co/792';
-	let imgPlayer1 = '';
-	let scorePlayer0 = 1;
-	let scorePlayer1 = 1;
+	let player0: string;
+	let player1: string;
+	let imgIndex: null | 0 | 1 = null;
+	let imgPlayer0: string;
+	let imgPlayer1: string;
+	let dataPrompt = '';
+	let player0Score: string | number = 1;
+	let player1Score: string | number = 1;
 	let visiblePlayer0 = false;
 	let visiblePlayer1 = false;
+	let maxRounds: number;
+
+	let mode: string;
 
 	const getWinner = () => {
-		if (scorePlayer0 + scorePlayer1 < MAX_ROUNDS) {
-			return;
-		}
-
-		if (scorePlayer0 > scorePlayer1) {
+		if (+player0Score > +player1Score) {
 			return player0;
-		} else if (scorePlayer1 > scorePlayer0) {
+		} else if (+player1Score > +player0Score) {
 			return player1;
 		}
 	};
 
-	$: if (imgPlayer0 && imgIndex !== null && !visiblePlayer0) {
+	onMount(() => {
+		socket.on('connect', () => {
+			socket
+				.emit('c:initClient', 'PROJECTOR')
+				.emit('p:requestEvent', 's:sendPromptBattle')
+				.emit('p:requestEvent', 's:sendMode');
+		});
+		socket.on('s:setPlayerNames', ({ playerName0, playerName1 }) => {
+			player0 = playerName0;
+			player1 = playerName1;
+		});
+		socket.on('s:sendMode', (_mode) => {
+			mode = _mode;
+			$page.url.searchParams.set('mode', mode);
+			goto(`?${$page.url.searchParams.toString()}`); // ...?mode=...
+		});
+		socket.on(
+			's:sendPromptBattle',
+			({
+				player0: name0,
+				player1: name1,
+				player0Score: score0,
+				player1Score: score1,
+				prompts,
+				currentRound,
+				maxRounds: _maxRounds
+			}) => {
+				player0 = name0;
+				player1 = name1;
+				player0Score = score0;
+				player1Score = score1;
+				dataPrompt = prompts[currentRound - 1];
+				maxRounds = _maxRounds;
+			}
+		);
+		socket.on('s:sendImage/results', ({ player0Image, player1Image }) => {
+			if (player0Image !== undefined) imgPlayer0 = 'data:image/png;base64,' + player0Image;
+			if (player1Image !== undefined) imgPlayer1 = 'data:image/png;base64,' + player1Image;
+
+			if (imgPlayer0 && imgPlayer1) {
+				isVotable = true;
+				areChoosing = true;
+
+				setTimeout(() => {
+					document.querySelectorAll('.marquee').forEach((marquee) => {
+						marquee.classList.add('fade');
+					});
+				}, 3500);
+			}
+		});
+		socket.on('s:sendImageChoice', (id) => {
+			switch (id) {
+				case '1': {
+					imgIndex = 0;
+					break;
+				}
+				case '2': {
+					imgIndex = 1;
+					break;
+				}
+				default: {
+					break;
+				}
+			}
+		});
+	});
+
+	$: if (imgPlayer0 && imgIndex === 0 && !visiblePlayer0) {
 		setTimeout(() => {
 			visiblePlayer0 = true;
 			setTimeout(() => {
 				showOverlay = true;
 				setTimeout(() => {
-					scorePlayer0++;
+					player0Score = +player0Score + 1;
 				}, 3000);
 			}, 3000);
 		}, 3000);
 	}
 
-	$: if (imgPlayer1 && imgIndex !== null && !visiblePlayer1) {
+	$: if (imgPlayer1 && imgIndex === 1 && !visiblePlayer1) {
 		setTimeout(() => {
 			visiblePlayer1 = true;
 			setTimeout(() => {
 				showOverlay = true;
 				setTimeout(() => {
-					scorePlayer1++;
+					player1Score = +player1Score + 1;
 				}, 3000);
 			}, 3000);
 		}, 3000);
@@ -69,7 +138,7 @@
 
 	$: if (showOverlay) {
 		setTimeout(() => {
-			let isDecided = scorePlayer0 + scorePlayer1 === MAX_ROUNDS;
+			let isDecided = +player0Score + +player1Score === maxRounds;
 
 			if (isDecided) {
 				showOverlayFinal = true;
@@ -101,7 +170,7 @@
 						<Loader />
 					</div>
 				{:else}
-					<img src={imgPlayer0 || 'https://placehold.co/792'} width="792" height="792" alt="792" />
+					<img src={imgPlayer0} width="792" height="792" alt="792" />
 					{#if visiblePlayer0}
 						<div
 							class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
@@ -127,7 +196,7 @@
 					class:opacity-0={imgIndex !== null}
 				>
 					<div class="prompter overflow-hidden">
-						<Autoscroll route="results" innerText={challenge} disableScrollbar />
+						<Autoscroll route="results" innerText={dataPrompt} disableScrollbar />
 					</div>
 					<div class="label w-full h-[16px]">Challenge</div>
 				</div>
@@ -138,7 +207,7 @@
 						class:opacity-0={imgIndex !== null}
 					>
 						<p>time remaining:</p>
-						<p>01:00</p>
+						<p class="complete">00:00</p>
 					</div>
 				{:else}
 					<div
@@ -162,9 +231,9 @@
 				>
 					<p>current score:</p>
 					<p class="flex w-full justify-between">
-						<span class="inline-block flex-grow flex-[33%]">{scorePlayer0}</span>
+						<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
 						<span class="inline-block flex-grow flex-[33%]">-</span>
-						<span class="inline-block flex-grow flex-[33%]">{scorePlayer1}</span>
+						<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
 					</p>
 				</div>
 			</div>
@@ -178,7 +247,7 @@
 						<Loader --delay={0.5} />
 					</div>
 				{:else}
-					<img src={imgPlayer1 || 'https://placehold.co/792'} width="792" height="792" alt="792" />
+					<img src={imgPlayer1} width="792" height="792" alt="792" />
 					{#if visiblePlayer1}
 						<div
 							class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
@@ -239,9 +308,9 @@
 			<div id="player-score" class="overlay w-full self-start" class:score={isRegistered}>
 				<p class="pt-[15px] h-[60px]">current score:</p>
 				<p class="flex w-full justify-between">
-					<span class="inline-block flex-grow flex-[33%]">{scorePlayer0}</span>
+					<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
 					<span class="inline-block flex-grow flex-[33%]">-</span>
-					<span class="inline-block flex-grow flex-[33%]">{scorePlayer1}</span>
+					<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
 				</p>
 			</div>
 			<div class="player player-0 flex justify-center items-center px-4">
@@ -448,9 +517,16 @@
 				background: #1c1f22;
 				width: 240px;
 				height: 260px;
+				display: grid;
+				grid-template-rows: auto 51px;
 
 				.prompter {
 					max-height: 202px;
+				}
+
+				.prompter,
+				.label {
+					max-width: 240px;
 				}
 			}
 			#prompt-clock,
@@ -492,13 +568,8 @@
 					font-weight: 400;
 					line-height: normal;
 
-					&.completing {
-						animation: pulse 0.75s linear infinite;
-					}
-
 					&.complete {
 						color: #ff3838;
-						animation: shakeX 1s linear;
 					}
 				}
 			}
