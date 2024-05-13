@@ -5,6 +5,7 @@
 	import { Socket, io } from 'socket.io-client';
 	import { timer, time, isRunning, isComplete, resetTimer } from '$lib/stores/timer-scribble';
 	import Counter from '$lib/components/Counter.svelte';
+	import LiveCanvas from '$lib/components/LiveCanvas.svelte';
 
 	const socket: Socket = io('http://localhost:3000', {
 		reconnection: true
@@ -18,6 +19,11 @@
 	let player1: string;
 
 	let mode: string;
+
+	let canvas0Id: string;
+	let canvas1Id: string;
+	let data0: { x1: number; y1: number; x2: number; y2: number }[];
+	let data1: { x1: number; y1: number; x2: number; y2: number }[];
 
 	onMount(() => {
 		socket.on('connect', () => {
@@ -52,6 +58,26 @@
 				dataPrompt = prompts[currentRound - 1];
 			}
 		);
+		socket.on('s:sendCanvasData', ({ id, data }) => {
+			console.log(id, data);
+
+			if (id === '1' && !canvas0Id) {
+				canvas0Id = id;
+			}
+			if (id === '2' && !canvas1Id) {
+				canvas1Id = id;
+			}
+
+			if (id === '1') {
+				data0 = data;
+			}
+			if (id === '2') {
+				data1 = data;
+			}
+
+			console.log(data0);
+			console.log(data1);
+		});
 
 		setTimeout(() => {
 			hasStarted = true;
@@ -84,7 +110,11 @@
 		</div>
 		<div class="main relative" class:opacity-125={!hasStarted}>
 			<div class="col-left flex justify-center items-center pointer-events-none">
-				<canvas width="512" height="512" />
+				{#if !canvas0Id}
+					<canvas width="512" height="512" />
+				{:else}
+					<LiveCanvas id={canvas0Id} lines={data0} />
+				{/if}
 			</div>
 			<div class="col-mid flex flex-col justify-between items-center">
 				<div id="prompt-clock" class="flex flex-col justify-center">
@@ -106,7 +136,11 @@
 				</div>
 			</div>
 			<div class="col-right flex justify-center items-center pointer-events-none">
-				<canvas width="512" height="512" />
+				{#if !canvas1Id}
+					<canvas width="512" height="512" />
+				{:else}
+					<LiveCanvas id={canvas1Id} lines={data1} />
+				{/if}
 			</div>
 			<div class="footer">
 				<div class="absolute left-0 bottom-0 px-2">{player0}</div>
