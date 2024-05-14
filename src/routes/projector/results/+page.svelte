@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
 	import Autoscroll from '$lib/components/Autoscroll.svelte';
 	import Loader from '$lib/components/Loader.svelte';
@@ -9,8 +9,9 @@
 	import Banner from '$lib/components/Banner.svelte';
 	import { EBannerText } from '$lib/ts/enums';
 	import { Confetti } from 'svelte-confetti';
+	import { UNKNOWN, URL_SERVER } from '$lib/ts/constants';
 
-	const socket: Socket = io('http://localhost:3000', {
+	const socket: Socket = io(URL_SERVER, {
 		reconnection: true
 	});
 
@@ -86,13 +87,13 @@
 
 			if (imgPlayer0 && imgPlayer1) {
 				isVotable = true;
-				areChoosing = true;
 
 				setTimeout(() => {
+					areChoosing = true;
 					document.querySelectorAll('.marquee').forEach((marquee) => {
 						marquee.classList.add('fade');
 					});
-				}, 3500);
+				}, 1500); // 3500
 			}
 		});
 		socket.on('s:sendImageChoice', (id) => {
@@ -111,19 +112,32 @@
 			}
 		});
 		socket.on('s:prepareProjector', (message) => {
-			switch (message) {
-				case 'round=current': {
-					goto(`/projector/prompt?${$page.url.searchParams.toString()}`);
-					break;
+			setTimeout(() => {
+				switch (message) {
+					case 'round=current': {
+						goto(`/projector/prompt?${$page.url.searchParams.toString()}`);
+						break;
+					}
+					case 'round=new': {
+						goto('/projector');
+						break;
+					}
+					default:
+						break;
 				}
-				case 'round=new': {
-					goto('/');
-					break;
-				}
-				default:
-					break;
-			}
+			}, 4000);
 		});
+
+		return () => {
+			// TODO: Resetting values necessary or is it reliable most of the time?
+			socket.disconnect();
+		};
+	});
+
+	onDestroy(() => {
+		imgIndex = null;
+		imgPlayer0 = '';
+		imgPlayer1 = '';
 	});
 
 	$: if (imgPlayer0 && imgIndex === 0 && !visiblePlayer0) {
@@ -166,6 +180,8 @@
 			}
 		}, 6000);
 	}
+
+	$: if (showNextRound) socket.emit('p:sendAdminReadiness');
 </script>
 
 <div
@@ -210,7 +226,7 @@
 					class:opacity-0={imgIndex !== null}
 				>
 					<div class="prompter overflow-hidden">
-						<Autoscroll route="results" innerText={dataPrompt} disableScrollbar />
+						<Autoscroll route="results" innerText={dataPrompt || UNKNOWN} disableScrollbar />
 					</div>
 					<div class="label w-full h-[16px]">Challenge</div>
 				</div>
@@ -245,9 +261,13 @@
 				>
 					<p>current score:</p>
 					<p class="flex w-full justify-between">
-						<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
+						<span class="inline-block flex-grow flex-[33%]"
+							>{player0Score === undefined ? UNKNOWN : player0Score}</span
+						>
 						<span class="inline-block flex-grow flex-[33%]">-</span>
-						<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
+						<span class="inline-block flex-grow flex-[33%]"
+							>{player1Score === undefined ? UNKNOWN : player1Score}</span
+						>
 					</p>
 				</div>
 			</div>
@@ -286,14 +306,14 @@
 					class:opacity-30={imgIndex === 1 && !showOverlay}
 					class:opacity-0={imgIndex === 1 && showOverlay}
 				>
-					{player0}
+					{player0 || sessionStorage?.getItem('1')}
 				</div>
 				<div
 					class="player-1 absolute right-[2px] bottom-[2px] px-2"
 					class:opacity-30={imgIndex === 0 && !showOverlay}
 					class:opacity-0={imgIndex === 0 && showOverlay}
 				>
-					{player1}
+					{player1 || sessionStorage?.getItem('2')}
 				</div>
 			</div>
 		</div>
@@ -355,7 +375,7 @@
 			x={[-5, 5]}
 			y={[-5, 5]}
 			xSpread={0.25}
-			delay={[0, 1000]}
+			delay={[0, 1000, 2000]}
 			size={30}
 			duration={3500}
 			amount={250}

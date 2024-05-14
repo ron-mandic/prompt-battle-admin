@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { UNKNOWN, URL_SERVER } from '$lib/ts/constants';
 	import { Socket, io } from 'socket.io-client';
 	import { onMount } from 'svelte';
 
-	const socket: Socket = io('http://localhost:3000', {
+	const socket: Socket = io(URL_SERVER, {
 		reconnection: true
 	});
 	let player0: string;
@@ -12,7 +13,8 @@
 	let player1: string;
 	let player1Score: string;
 
-	let message: string;
+	let message: string | undefined;
+	let hasDisabledClick = true;
 
 	onMount(() => {
 		socket.on('connect', () => {
@@ -36,22 +38,33 @@
 			message = _message;
 			console.log(message);
 		});
+		socket.on('s:sendAdminReadiness', () => {
+			hasDisabledClick = false;
+		});
+
+		return () => {
+			message = undefined;
+			hasDisabledClick = true;
+			socket.disconnect();
+		};
 	});
 
 	function handleButtonClick() {
-		// for the admin
-		switch (message) {
-			case 'round=current': {
-				goto(`/admin?${$page.url.searchParams.toString()}`);
-				break;
+		setTimeout(() => {
+			// for the admin
+			switch (message) {
+				case 'round=current': {
+					goto(`/admin?${$page.url.searchParams.toString()}`);
+					break;
+				}
+				case 'round=new': {
+					goto('/');
+					break;
+				}
+				default:
+					break;
 			}
-			case 'round=new': {
-				goto('/');
-				break;
-			}
-			default:
-				break;
-		}
+		}, 4000);
 
 		// for the client, redirected by the server
 		socket.emit('a:prepareNextRound', message);
@@ -66,25 +79,33 @@
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0">
 				<div class="player py-[25px] relative">
-					<span class="relative">{player0}</span>
+					<span class="relative">{player0 || sessionStorage?.getItem('1')}</span>
 				</div>
 			</div>
 			<div id="player-score" class="w-full self-start mt-4">
 				<p>current score:</p>
 				<p class="flex w-full justify-between">
-					<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
+					<span class="inline-block flex-grow flex-[33%]"
+						>{player0Score === undefined ? UNKNOWN : player0Score}</span
+					>
 					<span class="inline-block flex-grow flex-[33%]">-</span>
-					<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
+					<span class="inline-block flex-grow flex-[33%]"
+						>{player1Score === undefined ? UNKNOWN : player1Score}</span
+					>
 				</p>
 			</div>
 			<div id="player-1">
 				<div class="player py-[25px] relative">
-					<span class="relative">{player1}</span>
+					<span class="relative">{player1 || sessionStorage?.getItem('2')}</span>
 				</div>
 			</div>
 		</div>
 		<div class="mt-[181px] w-full h-auto flex justify-center">
-			<button class="link-button flex flex-col" on:click={handleButtonClick}>
+			<button
+				class="link-button flex flex-col"
+				class:disabled={hasDisabledClick}
+				on:click={handleButtonClick}
+			>
 				<div class="flex-col flex items-center mt-[8px]">
 					<span class="text">start</span>
 					<span class="text-addition">(Next round)</span>
@@ -130,6 +151,12 @@
 
 	button {
 		all: unset;
+	}
+
+	button.disabled {
+		cursor: not-allowed;
+		pointer-events: none;
+		opacity: 0.3;
 	}
 
 	#player-score {

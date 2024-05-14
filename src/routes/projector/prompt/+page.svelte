@@ -7,8 +7,9 @@
 	import Counter from '$lib/components/Counter.svelte';
 	import Autoscroll from '$lib/components/Autoscroll.svelte';
 	import AutoscrollChallenge from '$lib/components/AutoscrollChallenge.svelte';
+	import { UNKNOWN, URL_SERVER } from '$lib/ts/constants';
 
-	const socket: Socket = io('http://localhost:3000', {
+	const socket: Socket = io(URL_SERVER, {
 		reconnection: true
 	});
 
@@ -63,7 +64,7 @@
 
 		setTimeout(() => {
 			hasStarted = true;
-		}, 2750);
+		}, 0); // 2750
 	});
 
 	onDestroy(() => {
@@ -86,7 +87,7 @@
 					break;
 				}
 			}
-		}, 2000);
+		}, 0); // 2000
 	}
 </script>
 
@@ -105,7 +106,7 @@
 		<div class="header relative" class:opacity-0={!hasStarted}>
 			<Autoscroll
 				route="prompt-header"
-				innerText={dataPrompt}
+				innerText={dataPrompt || UNKNOWN}
 				disableScrollbar
 				constrainOverflowBy={46}
 				--padding="20px 20px 56px"
@@ -129,9 +130,13 @@
 				<div id="player-score" class="w-full self-start mt-4">
 					<p>current score:</p>
 					<p class="flex w-full justify-between">
-						<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
+						<span class="inline-block flex-grow flex-[33%]"
+							>{player0Score === undefined ? UNKNOWN : player0Score}</span
+						>
 						<span class="inline-block flex-grow flex-[33%]">-</span>
-						<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
+						<span class="inline-block flex-grow flex-[33%]"
+							>{player1Score === undefined ? UNKNOWN : player1Score}</span
+						>
 					</p>
 				</div>
 			</div>
@@ -139,8 +144,8 @@
 				<Autoscroll route="prompt-main" innerText={player1Prompt} --padding-bottom="56px" />
 			</div>
 			<div class="footer">
-				<div class="absolute left-0 bottom-0 px-2">{player0}</div>
-				<div class="absolute right-0 bottom-0 px-2">{player1}</div>
+				<div class="absolute left-0 bottom-0 px-2">{player0 || sessionStorage?.getItem('1')}</div>
+				<div class="absolute right-0 bottom-0 px-2">{player1 || sessionStorage?.getItem('2')}</div>
 			</div>
 		</div>
 	</div>

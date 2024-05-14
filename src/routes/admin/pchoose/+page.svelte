@@ -8,8 +8,9 @@
 	import ImageThumbnail from '$lib/components/ImageThumbnail.svelte';
 	import IconCross from '$lib/components/IconCross.svelte';
 	import IconCheck from '$lib/components/IconCheck.svelte';
+	import { UNKNOWN, URL_SERVER } from '$lib/ts/constants';
 
-	const socket: Socket = io('http://localhost:3000', {
+	const socket: Socket = io(URL_SERVER, {
 		reconnection: true
 	});
 	let player0: string;
@@ -19,10 +20,10 @@
 	let dataGUUID: string;
 
 	let mode: string;
-	let playerNumberA: string;
-	let playerNumberB: string;
-	let imageIndexA: string;
-	let imageIndexB: string;
+	let playerNumberA: string | undefined;
+	let playerNumberB: string | undefined;
+	let imageIndexA: string | undefined;
+	let imageIndexB: string | undefined;
 	let boolA = false;
 	let boolB = false;
 
@@ -59,12 +60,22 @@
 				boolB = true;
 			}
 		});
+
+		return () => {
+			playerNumberA = undefined;
+			playerNumberB = undefined;
+			imageIndexA = undefined;
+			imageIndexB = undefined;
+			boolA = false;
+			boolB = false;
+			socket.disconnect();
+		};
 	});
 
 	$: if (boolA && boolB) {
 		setTimeout(() => {
 			goto(`/admin/achoose?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
-		}, 1000);
+		}, 0); // 1000
 	}
 </script>
 
@@ -73,7 +84,7 @@
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0">
 				<div class="player py-[25px] relative">
-					<span class="relative px-4">{player0}</span>
+					<span class="relative px-4">{player0 || sessionStorage?.getItem('1')}</span>
 					{#if boolA}
 						<div
 							class="absolute top-1/2 -left-24 -translate-x-1/2 -translate-y-1/2"
@@ -103,22 +114,32 @@
 					{/if}
 				</div>
 				<div class="image-thumbnails flex justify-between items-center pt-16">
-					<ImageThumbnail chosen={playerNumberA === '1' && +imageIndexA === 0} />
-					<ImageThumbnail chosen={playerNumberA === '1' && +imageIndexA === 1} />
-					<ImageThumbnail chosen={playerNumberA === '1' && +imageIndexA === 2} />
+					<ImageThumbnail
+						chosen={playerNumberA === '1' && imageIndexA !== undefined && +imageIndexA === 0}
+					/>
+					<ImageThumbnail
+						chosen={playerNumberA === '1' && imageIndexA !== undefined && +imageIndexA === 1}
+					/>
+					<ImageThumbnail
+						chosen={playerNumberA === '1' && imageIndexA !== undefined && +imageIndexA === 2}
+					/>
 				</div>
 			</div>
 			<div id="player-score" class="w-full self-start mt-4">
 				<p>current score:</p>
 				<p class="flex w-full justify-between">
-					<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
+					<span class="inline-block flex-grow flex-[33%]"
+						>{player0Score === undefined ? UNKNOWN : player0Score}</span
+					>
 					<span class="inline-block flex-grow flex-[33%]">-</span>
-					<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
+					<span class="inline-block flex-grow flex-[33%]"
+						>{player1Score === undefined ? UNKNOWN : player1Score}</span
+					>
 				</p>
 			</div>
 			<div id="player-1">
 				<div class="player py-[25px] relative">
-					<span class="relative px-4">{player1}</span>
+					<span class="relative px-4">{player1 || sessionStorage?.getItem('2')}</span>
 					{#if boolB}
 						<div
 							class="absolute top-1/2 -right-24 translate-x-1/2 -translate-y-1/2"
@@ -148,9 +169,15 @@
 					{/if}
 				</div>
 				<div class="image-thumbnails flex justify-between items-center pt-16">
-					<ImageThumbnail chosen={playerNumberB === '2' && +imageIndexB === 0} />
-					<ImageThumbnail chosen={playerNumberB === '2' && +imageIndexB === 1} />
-					<ImageThumbnail chosen={playerNumberB === '2' && +imageIndexB === 2} />
+					<ImageThumbnail
+						chosen={playerNumberB === '2' && imageIndexB !== undefined && +imageIndexB === 0}
+					/>
+					<ImageThumbnail
+						chosen={playerNumberB === '2' && imageIndexB !== undefined && +imageIndexB === 1}
+					/>
+					<ImageThumbnail
+						chosen={playerNumberB === '2' && imageIndexB !== undefined && +imageIndexB === 2}
+					/>
 				</div>
 			</div>
 		</div>

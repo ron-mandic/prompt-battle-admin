@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { UNKNOWN, URL_SERVER } from '$lib/ts/constants';
 	import { Socket, io } from 'socket.io-client';
 	import { onMount } from 'svelte';
 
-	const socket: Socket = io('http://localhost:3000', {
+	const socket: Socket = io(URL_SERVER, {
 		reconnection: true
 	});
 	let player0: string;
@@ -17,6 +18,7 @@
 	let label = 'Players are prompting';
 
 	onMount(() => {
+		sessionStorage.clear();
 		mode = $page.url.searchParams.get('mode')!;
 
 		socket.on('connect', () => {
@@ -42,7 +44,7 @@
 				case 'p':
 					setTimeout(() => {
 						goto(`/admin/pchoose?${$page.url.searchParams.toString()}`);
-					}, 1000);
+					}, 0); // 1000
 					break;
 				case 'ps':
 					label = 'Players are scribbling';
@@ -52,10 +54,12 @@
 		socket.on('s:sendRoute/scribble', () => {
 			setTimeout(() => {
 				goto(`/admin/pchoose?${$page.url.searchParams.toString()}`);
-			}, 1000);
+			}, 0); // 1000
 		});
 
 		return () => {
+			sessionStorage.setItem('1', player0);
+			sessionStorage.setItem('2', player1);
 			socket.disconnect();
 		};
 	});
@@ -70,9 +74,13 @@
 			<div id="player-score" class="w-full">
 				<p>current score:</p>
 				<p class="flex w-full justify-between">
-					<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
+					<span class="inline-block flex-grow flex-[33%]"
+						>{player0Score === undefined ? UNKNOWN : player0Score}</span
+					>
 					<span class="inline-block flex-grow flex-[33%]">-</span>
-					<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
+					<span class="inline-block flex-grow flex-[33%]"
+						>{player1Score === undefined ? UNKNOWN : player1Score}</span
+					>
 				</p>
 			</div>
 			<div id="player-1" class="player py-[25px]">
@@ -102,7 +110,6 @@
 		span {
 			color: #fff;
 			text-align: center;
-			font-family: 'JetBrains Mono';
 			font-size: 80px;
 			font-style: normal;
 			font-weight: 700;

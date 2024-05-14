@@ -4,10 +4,11 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { Socket, io } from 'socket.io-client';
 	import { timer, time, isRunning, isComplete, resetTimer } from '$lib/stores/timer-scribble';
+	import { UNKNOWN, URL_SERVER } from '$lib/ts/constants';
 	import Counter from '$lib/components/Counter.svelte';
 	import LiveCanvas from '$lib/components/LiveCanvas.svelte';
 
-	const socket: Socket = io('http://localhost:3000', {
+	const socket: Socket = io(URL_SERVER, {
 		reconnection: true
 	});
 
@@ -20,10 +21,10 @@
 
 	let mode: string;
 
-	let canvas0Id: string;
-	let canvas1Id: string;
-	let data0: { x1: number; y1: number; x2: number; y2: number }[];
-	let data1: { x1: number; y1: number; x2: number; y2: number }[];
+	let canvas0Id: string | undefined;
+	let canvas1Id: string | undefined;
+	let data0: { x1: number; y1: number; x2: number; y2: number }[] | undefined;
+	let data1: { x1: number; y1: number; x2: number; y2: number }[] | undefined;
 
 	onMount(() => {
 		socket.on('connect', () => {
@@ -81,7 +82,15 @@
 
 		setTimeout(() => {
 			hasStarted = true;
-		}, 2000);
+		}, 0); // 2000
+
+		return () => {
+			canvas0Id = undefined;
+			canvas1Id = undefined;
+			data0 = undefined;
+			data1 = undefined;
+			socket.disconnect();
+		};
 	});
 
 	onDestroy(() => {
@@ -95,7 +104,7 @@
 			timer.reset();
 
 			goto(`/projector/results?${$page.url.searchParams.toString()}`);
-		}, 2000);
+		}, 0); // 2000
 	}
 </script>
 
@@ -105,7 +114,7 @@
 >
 	<div class="grid w-full h-full">
 		<div class="header relative line-clamp-2">
-			<p>{dataPrompt}</p>
+			<p>{dataPrompt || UNKNOWN}</p>
 			<div class="label absolute left-0 bottom-0">Challenge</div>
 		</div>
 		<div class="main relative" class:opacity-125={!hasStarted}>
@@ -129,9 +138,13 @@
 				<div id="player-score" class="w-full self-start mt-4">
 					<p>current score:</p>
 					<p class="flex w-full justify-between">
-						<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
+						<span class="inline-block flex-grow flex-[33%]"
+							>{player0Score === undefined ? UNKNOWN : player0Score}</span
+						>
 						<span class="inline-block flex-grow flex-[33%]">-</span>
-						<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
+						<span class="inline-block flex-grow flex-[33%]"
+							>{player1Score === undefined ? UNKNOWN : player1Score}</span
+						>
 					</p>
 				</div>
 			</div>
@@ -143,8 +156,8 @@
 				{/if}
 			</div>
 			<div class="footer">
-				<div class="absolute left-0 bottom-0 px-2">{player0}</div>
-				<div class="absolute right-0 bottom-0 px-2">{player1}</div>
+				<div class="absolute left-0 bottom-0 px-2">{player0 || sessionStorage?.getItem('2')}</div>
+				<div class="absolute right-0 bottom-0 px-2">{player1 || sessionStorage?.getItem('2')}</div>
 			</div>
 		</div>
 	</div>

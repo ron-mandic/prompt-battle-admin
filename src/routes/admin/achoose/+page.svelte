@@ -4,8 +4,9 @@
 	import { Socket, io } from 'socket.io-client';
 	import IconCheck from '$lib/components/IconCheck.svelte';
 	import { onMount } from 'svelte';
+	import { UNKNOWN, URL_SERVER } from '$lib/ts/constants';
 
-	const socket: Socket = io('http://localhost:3000', {
+	const socket: Socket = io(URL_SERVER, {
 		reconnection: true
 	});
 	let player0: string;
@@ -15,8 +16,8 @@
 
 	let dataGUUID: string;
 	let mode: string;
-	let srcImageA: string;
-	let srcImageB: string;
+	let srcImageA: string | undefined;
+	let srcImageB: string | undefined;
 
 	let haveChosen = false;
 
@@ -45,7 +46,53 @@
 			srcImageA = 'data:image/png;base64,' + player0Image;
 			srcImageB = 'data:image/png;base64,' + player1Image;
 		});
+
+		return () => {
+			// TODO: Reset all variables or just keep it as is? Or in onDestroy()?
+			// srcImageA = undefined;
+			// srcImageB = undefined;
+			// haveChosen = false;
+			socket.disconnect();
+		};
 	});
+
+	function handleButtonA(e: MouseEvent) {
+		if (haveChosen) return;
+
+		const target = e.currentTarget! as HTMLDivElement;
+		target.dataset!.status = 'yes';
+		haveChosen = true;
+
+		socket.emit('a:sendBattleData/admin/achoose', {
+			player0Score: (+player0Score + 1).toString(),
+			player1Score
+		});
+		socket.emit('a:sendImageChoice', '1');
+		player0Score = (+player0Score + 1).toString();
+
+		setTimeout(() => {
+			goto(`/admin/next?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
+		}, 0); // 2000
+	}
+
+	function handleButtonB(e: MouseEvent) {
+		if (haveChosen) return;
+
+		const target = e.currentTarget! as HTMLDivElement;
+		target.dataset!.status = 'yes';
+		haveChosen = true;
+
+		socket.emit('a:sendBattleData/admin/achoose', {
+			player0Score,
+			player1Score: (+player1Score + 1).toString()
+		});
+		socket.emit('a:sendImageChoice', '2');
+		player1Score = (+player1Score + 1).toString();
+
+		setTimeout(() => {
+			goto(`/admin/next?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
+		}, 0); // 2000
+	}
 </script>
 
 <div class="relative w-full debug h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
@@ -53,35 +100,13 @@
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0">
 				<div class="player py-[25px] relative">
-					<span class="relative px-4">{player0}</span>
+					<span class="relative px-4">{player0 || sessionStorage.getItem('1')}</span>
 					<div class="absolute top-1/2 -left-24 -translate-x-1/2 -translate-y-1/2">
 						<IconCheck />
 					</div>
 				</div>
 				<div class="image-container flex items-center justify-center w-full h-[420px] mt-8">
-					<div
-						class="image"
-						data-status="no"
-						on:click|once={(e) => {
-							if (haveChosen) return;
-
-							const target = e.currentTarget;
-							target.dataset.status = 'yes';
-							haveChosen = true;
-
-							socket.emit('a:sendBattleData/admin/achoose', {
-								player0Score: (+player0Score + 1).toString(),
-								player1Score
-							});
-							socket.emit('a:sendImageChoice', '1');
-
-							player0Score = (+player0Score + 1).toString();
-
-							setTimeout(() => {
-								goto(`/admin/next?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
-							}, 2000);
-						}}
-					>
+					<div class="image" data-status="no" on:click|once={handleButtonA}>
 						<img width="378" height="378" src={srcImageA} alt="" />
 					</div>
 				</div>
@@ -89,42 +114,24 @@
 			<div id="player-score" class="w-full self-start mt-4">
 				<p>current score:</p>
 				<p class="flex w-full justify-between">
-					<span class="inline-block flex-grow flex-[33%]">{player0Score}</span>
+					<span class="inline-block flex-grow flex-[33%]"
+						>{player0Score === undefined ? UNKNOWN : player0Score}</span
+					>
 					<span class="inline-block flex-grow flex-[33%]">-</span>
-					<span class="inline-block flex-grow flex-[33%]">{player1Score}</span>
+					<span class="inline-block flex-grow flex-[33%]"
+						>{player1Score === undefined ? UNKNOWN : player1Score}</span
+					>
 				</p>
 			</div>
 			<div id="player-1">
 				<div class="player py-[25px] relative">
-					<span class="relative px-4">{player1}</span>
+					<span class="relative px-4">{player1 || sessionStorage.getItem('2')}</span>
 					<div class="absolute top-1/2 -right-24 translate-x-1/2 -translate-y-1/2">
 						<IconCheck />
 					</div>
 				</div>
 				<div class="image-container flex items-center justify-center w-full h-[420px] mt-8">
-					<div
-						class="image"
-						data-status="no"
-						on:click|once={(e) => {
-							if (haveChosen) return;
-
-							const target = e.currentTarget;
-							target.dataset.status = 'yes';
-							haveChosen = true;
-
-							socket.emit('a:sendBattleData/admin/achoose', {
-								player0Score,
-								player1Score: (+player1Score + 1).toString()
-							});
-							socket.emit('a:sendImageChoice', '2');
-
-							player1Score = (+player1Score + 1).toString();
-
-							setTimeout(() => {
-								goto(`/admin/next?${$page.url.searchParams.toString()}`); // ...&guuid=g-...
-							}, 2000);
-						}}
-					>
+					<div class="image" data-status="no" on:click|once={handleButtonB}>
 						<img width="378" height="378" src={srcImageB} alt="" />
 					</div>
 				</div>

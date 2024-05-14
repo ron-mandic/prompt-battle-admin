@@ -1,17 +1,20 @@
 <script lang="ts">
-	import { TEXT_H1 } from '$lib/ts/constants';
+	import { TEXT_H1, URL_SERVER } from '$lib/ts/constants';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { Socket, io } from 'socket.io-client';
 	import { onMount } from 'svelte';
 
-	const socket: Socket = io('http://localhost:3000', {
+	const socket: Socket = io(URL_SERVER, {
 		reconnection: true
 	});
 	let player0: string;
 	let player1: string;
+	let player0IsReady = false;
+	let player1IsReady = false;
 
 	onMount(() => {
+		sessionStorage.clear();
+
 		socket.on('connect', () => {
 			socket.emit('c:initClient', 'PROJECTOR');
 		});
@@ -22,10 +25,20 @@
 		socket.on('s:setProjector/projector/', () => {
 			setTimeout(() => {
 				goto('/projector/prompt/');
-			}, 1000);
+			}, 0); // 1000
+		});
+		socket.on('s:setPlayerReadiness', (id) => {
+			console.log('Player', id, 'is ready');
+
+			if (id == '1') player0IsReady = true;
+			if (id == '2') player1IsReady = true;
 		});
 
 		return () => {
+			player0IsReady = false;
+			player1IsReady = false;
+			sessionStorage.setItem('1', player0);
+			sessionStorage.setItem('2', player1);
 			socket.disconnect();
 		};
 	});
@@ -36,11 +49,11 @@
 		<h1 class="uppercase text-center w-full">{@html TEXT_H1}</h1>
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0" class="player py-[25px]">
-				<span class="relative px-4">{player0 || ''}</span>
+				<span class="relative px-4" class:ready={player0IsReady}>{player0 || ''}</span>
 			</div>
 			<div class="vs">vs</div>
 			<div id="player-1" class="player py-[25px]">
-				<span class="relative px-4">{player1 || ''}</span>
+				<span class="relative px-4" class:ready={player1IsReady}>{player1 || ''}</span>
 			</div>
 		</div>
 	</div>
@@ -79,6 +92,11 @@
 		border: 2px solid #9c9c9c;
 		background: #1c1f22;
 
+		&:has(span.ready) {
+			border: 2px solid rgb(68, 216, 68);
+			background-color: hsl(120, 57%, 12%);
+		}
+
 		span {
 			color: #fff;
 			text-align: center;
@@ -94,7 +112,7 @@
 			text-overflow: ellipsis;
 			white-space: nowrap;
 
-			&::after {
+			&:not(.ready)::after {
 				content: '';
 				position: absolute;
 				right: 0;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 
 	export let id: string;
 	export let lines: {
@@ -31,6 +31,11 @@
 		ctx = canvas.getContext('2d')!;
 		drawLines();
 		prevLines = JSON.stringify(lines);
+	});
+
+	onDestroy(() => {
+		ctx.clearRect(0, 0, 512, 512);
+		lines = [];
 	});
 
 	$: {
