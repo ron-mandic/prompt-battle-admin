@@ -108,6 +108,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Projector - Scribble</title>
+</svelte:head>
+
 <div
 	id="prompt-screen"
 	class="w-full h-full m-auto pt-[84px] pb-[103px] flex-col justify-between flex"

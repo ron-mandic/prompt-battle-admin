@@ -63,6 +63,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Server</title>
+</svelte:head>
+
 <div class="w-full h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
 	<div class="top">
 		<h1 class="uppercase text-center w-full">{@html TEXT_H1}</h1>

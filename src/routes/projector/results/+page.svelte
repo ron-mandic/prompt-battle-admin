@@ -184,6 +184,10 @@
 	$: if (showNextRound) socket.emit('p:sendAdminReadiness');
 </script>
 
+<svelte:head>
+	<title>Projector - Results</title>
+</svelte:head>
+
 <div
 	id="prompt-screen"
 	class="w-full h-full m-auto pt-[117px] pb-[103px] flex-col justify-between flex"

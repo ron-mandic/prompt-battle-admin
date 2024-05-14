@@ -95,6 +95,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Admin - Audience chooses</title>
+</svelte:head>
+
 <div class="relative w-full debug h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
 	<div class="top flex flex-col justify-start">
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">

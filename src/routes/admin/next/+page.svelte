@@ -74,6 +74,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Admin - Next round</title>
+</svelte:head>
+
 <div class="relative w-full h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
 	<div class="top flex flex-col justify-between">
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">

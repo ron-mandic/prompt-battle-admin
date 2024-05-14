@@ -91,6 +91,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Projector - Prompt</title>
+</svelte:head>
+
 {#if !hasStarted}
 	<div id="challenge-overlay" class="fixed h-screen w-screen flex flex-col items-center gap-[14px]">
 		<h1>Challenge:</h1>
