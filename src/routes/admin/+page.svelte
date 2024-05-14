@@ -69,7 +69,7 @@
 	<title>Admin - Main page</title>
 </svelte:head>
 
-<div class="relative w-full debug h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
+<div class="relative w-full h-full m-auto pt-[61px] pb-[42px] flex-col justify-between flex">
 	<div class="top flex flex-col items-start">
 		<div class="players flex w-full px-[181px] items-center gap-[75px]">
 			<div id="player-0" class="player py-[25px]">
